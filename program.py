@@ -1,5 +1,23 @@
 import requests
 from bs4 import BeautifulSoup
+from collections import namedtuple, Counter
+
+NBATeamWiki = namedtuple('NBATeamWiki', [
+    'name',
+    'conference',
+    'division',
+    'city',
+    'state',
+    'stadium_name',
+    'stadium_capacity',
+    'stadium_lat',
+    'stadium_lon',
+    'year_founded',
+    'year_joined',
+    'team_wiki',
+    'city_wiki',
+    'stadium_wiki',
+])
 
 
 def header():
@@ -42,6 +60,44 @@ def get_division(row):
     print(get_text_from_html(division))
 
 
+def get_team_info(row, conference=None, division=None):
+    team_data = row.find_all('td')
+    team_name = get_text_from_html(team_data[0])
+    team_wiki = team_data[0].a['href']
+
+    city, state = get_text_from_html(team_data[1]).split(',')
+    city_wiki = team_data[1].find_all('a')[0]['href']
+
+    stadium_name = get_text_from_html(team_data[2])
+    stadium_wiki = team_data[2].a['href']
+    stadium_capacity = get_text_from_html(team_data[3])
+
+    coordinate = team_data[4].find('span', class_='geo').get_text()
+    lat, lon = (float(x) for x in coordinate.split(';'))
+
+    year_founded = int(get_text_from_html(team_data[5]).replace('*', ''))
+    year_joined = int(get_text_from_html(team_data[-1]))
+
+    team = NBATeamWiki(
+        name=team_name,
+        conference=conference,
+        division=division,
+        city=city,
+        state=state,
+        stadium_name=stadium_name,
+        stadium_capacity=stadium_capacity,
+        stadium_lat=lat,
+        stadium_lon=lon,
+        year_founded=year_founded,
+        year_joined=year_joined,
+        team_wiki=team_wiki,
+        city_wiki=city_wiki,
+        stadium_wiki=stadium_wiki
+    )
+
+    print('team: ', team)
+
+
 def get_text_from_html(html):
     return html.text.strip() if html else None
 
@@ -66,31 +122,7 @@ def main():
     get_division(rows[23])  # Pacific
     get_division(rows[28])  # Southwest
 
-    # print(Counter([len(row.find_all('td')) for row in rows]))
-    celtics = rows[3].find_all('td')
-    team_name = celtics[0].get_text().strip()
-    team_wiki = celtics[0].a['href']
-    print('team_name: ', team_name)
-    print('team_wiki: ', team_wiki)
-    city, state = celtics[1].get_text().strip().split(',')
-    city_wiki = celtics[1].find_all('a')[0]['href']
-    print('city: ', city)
-    print('state: ', state)
-    print('city_wiki: ', city_wiki)
-    stadium = celtics[2].get_text().strip()
-    stadium_wiki = celtics[2].a['href']
-    print('stadium: ', stadium)
-    print('stadium_wiki: ', stadium_wiki)
-    stadium_capacity = celtics[3].get_text().strip()
-    print('stadium_capacity: ', stadium_capacity)
-    coordinate = celtics[4].find('span', class_='geo').get_text()
-    lat, lon = (float(x) for x in coordinate.split(';'))
-    print('lat: ', lat)
-    print('lon: ', lon)
-    year_founded = int(celtics[5].get_text().replace('*', ''))
-    print('year_founded: ', year_founded)
-    year_joined = int(celtics[-1].get_text())
-    print('year_joined: ', year_joined)
+    get_team_info(rows[2], 'Atlantic', 'Eastern Conference')
 
 
 if __name__ == '__main__':
