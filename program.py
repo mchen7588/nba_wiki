@@ -50,14 +50,35 @@ def get_headers(header_row):
     return headers
 
 
+def get_all_team_info(rows_from_nba_table):
+    all_team_info = []
+    conference = ''
+    division = ''
+
+    for row in rows_from_nba_table[1:]:
+
+        if get_conference(row):
+            conference = get_conference(row)
+            print('CONFERENCE: ', conference)
+            continue
+
+        if get_division(row):
+            division = get_division(row)
+            print('DIVISION: ', division)
+
+        all_team_info.append(get_team_info(row, conference, division))
+
+    return all_team_info
+
+
 def get_conference(row):
     conference = row.find('th', colspan=True)
-    print(get_text_from_html(conference))
+    return get_text_from_html(conference)
 
 
 def get_division(row):
     division = row.find('th', rowspan=True)
-    print(get_text_from_html(division))
+    return get_text_from_html(division)
 
 
 def get_team_info(row, conference=None, division=None):
@@ -70,13 +91,13 @@ def get_team_info(row, conference=None, division=None):
 
     stadium_name = get_text_from_html(team_data[2])
     stadium_wiki = team_data[2].a['href']
-    stadium_capacity = get_text_from_html(team_data[3])
+    stadium_capacity = int(get_text_from_html(team_data[3]).replace(',', ''))
 
     coordinate = team_data[4].find('span', class_='geo').get_text()
     lat, lon = (float(x) for x in coordinate.split(';'))
 
     year_founded = int(get_text_from_html(team_data[5]).replace('*', ''))
-    year_joined = int(get_text_from_html(team_data[-1]))
+    year_joined = int(get_text_from_html(team_data[-1]).replace('*', ''))
 
     team = NBATeamWiki(
         name=team_name,
@@ -95,7 +116,8 @@ def get_team_info(row, conference=None, division=None):
         stadium_wiki=stadium_wiki
     )
 
-    print('team: ', team)
+    print('TEAM: ', team)
+    return team
 
 
 def get_text_from_html(html):
@@ -106,23 +128,12 @@ def main():
     header()
     html = get_html()
     nba_wiki_table = get_nba_wiki_table(html)
-    rows = get_rows(nba_wiki_table)
-    print('rows: ', len(rows))
-
-    headers = get_headers(rows[0])
-    print('headers: ', headers)
-
-    get_conference(rows[1])  # East
-    get_conference(rows[17])  # West
-
-    get_division(rows[2])  # Atlantic
-    get_division(rows[7])  # Central
-    get_division(rows[12])  # Southeast
-    get_division(rows[18])  # Northwest
-    get_division(rows[23])  # Pacific
-    get_division(rows[28])  # Southwest
-
-    get_team_info(rows[2], 'Atlantic', 'Eastern Conference')
+    rows_from_nba_table = get_rows(nba_wiki_table)
+    # headers = get_headers(rows_from_nba_table[0])
+    # print('headers: ', headers)
+    all_team_info = get_all_team_info(rows_from_nba_table)
+    print('##########COUNT: ', len(all_team_info))
+    print('##########ALL: ', all_team_info)
 
 
 if __name__ == '__main__':
