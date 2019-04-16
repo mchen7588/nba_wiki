@@ -59,12 +59,12 @@ def get_all_team_info(rows_from_nba_table):
 
         if get_conference(row):
             conference = get_conference(row)
-            print('CONFERENCE: ', conference)
+            # print('CONFERENCE: ', conference)
             continue
 
         if get_division(row):
             division = get_division(row)
-            print('DIVISION: ', division)
+            # print('DIVISION: ', division)
 
         all_team_info.append(get_team_info(row, conference, division))
 
@@ -116,8 +116,21 @@ def get_team_info(row, conference=None, division=None):
         stadium_wiki=stadium_wiki
     )
 
-    print('TEAM: ', team)
+    # print('TEAM: ', team)
     return team
+
+
+def get_team_html(url):
+    response = requests.get(url)
+
+    return response.text
+
+
+def get_team_wiki_table(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    team_wiki_table = soup.body.find_all('table', class_="infobox vcard")
+
+    print('team_wiki_table', team_wiki_table)
 
 
 def get_text_from_html(html):
@@ -132,8 +145,11 @@ def main():
     # headers = get_headers(rows_from_nba_table[0])
     # print('headers: ', headers)
     all_team_info = get_all_team_info(rows_from_nba_table)
-    print('##########COUNT: ', len(all_team_info))
-    print('##########ALL: ', all_team_info)
+    # print('##########COUNT: ', len(all_team_info))
+    # print('##########ALL: ', all_team_info)
+
+    team_html = get_team_html('https://en.wikipedia.org/wiki/Atlanta_Hawks')
+    get_team_wiki_table(team_html)
 
 
 if __name__ == '__main__':
