@@ -119,6 +119,14 @@ def get_team_info(row, conference=None, division=None):
     return team
 
 
+def get_head_coach(rows_from_team_table):
+    row_with_head_coach = None
+    for row in rows_from_team_table:
+        if row.find('th', text='Head coach'):
+            row_with_head_coach = row
+    print(get_text_from_html(row_with_head_coach.find('a', title=True)))
+
+
 def get_text_from_html(html):
     return html.text.strip() if html else None
 
@@ -132,12 +140,13 @@ def main():
     # headers = get_headers(rows_from_nba_table[0])
     # print('headers: ', headers)
     all_team_info = get_all_team_info(rows_from_nba_table)
-    print('##########COUNT: ', len(all_team_info))
-    print('##########ALL: ', all_team_info)
+    # print('##########COUNT: ', len(all_team_info))
+    # print('##########ALL: ', all_team_info)
 
     team_wiki_html = get_html(base_wiki_url + '/wiki/Atlanta_Hawks')
     team_wiki_table = get_table(team_wiki_html, 'infobox vcard')
-    print('team_wiki_table', team_wiki_table)
+    rows_from_team_table = get_rows(team_wiki_table)
+    get_head_coach(rows_from_team_table)
 
 
 if __name__ == '__main__':
