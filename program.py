@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from collections import namedtuple, Counter
+from collections import namedtuple
 
 NBATeamWiki = namedtuple('NBATeamWiki', [
     'name',
@@ -26,18 +26,17 @@ def header():
     print('----------------------------')
 
 
-def get_html():
-    url = 'https://en.wikipedia.org/wiki/National_Basketball_Association'
+def get_html(url):
     response = requests.get(url)
 
     return response.text
 
 
-def get_nba_wiki_table(html):
+def get_table(html, search_query):
     soup = BeautifulSoup(html, 'html.parser')
-    nba_wiki_table = soup.body.find_all('table', class_='navbox wikitable')
+    table = soup.body.find_all('table', class_=search_query)
 
-    return nba_wiki_table
+    return table
 
 
 def get_rows(table_html):
@@ -120,36 +119,25 @@ def get_team_info(row, conference=None, division=None):
     return team
 
 
-def get_team_html(url):
-    response = requests.get(url)
-
-    return response.text
-
-
-def get_team_wiki_table(html):
-    soup = BeautifulSoup(html, 'html.parser')
-    team_wiki_table = soup.body.find_all('table', class_="infobox vcard")
-
-    print('team_wiki_table', team_wiki_table)
-
-
 def get_text_from_html(html):
     return html.text.strip() if html else None
 
 
 def main():
     header()
-    html = get_html()
-    nba_wiki_table = get_nba_wiki_table(html)
+    base_wiki_url = 'https://en.wikipedia.org'
+    nba_wiki_html = get_html(base_wiki_url + '/wiki/National_Basketball_Association')
+    nba_wiki_table = get_table(nba_wiki_html, 'navbox wikitable')
     rows_from_nba_table = get_rows(nba_wiki_table)
     # headers = get_headers(rows_from_nba_table[0])
     # print('headers: ', headers)
     all_team_info = get_all_team_info(rows_from_nba_table)
-    # print('##########COUNT: ', len(all_team_info))
-    # print('##########ALL: ', all_team_info)
+    print('##########COUNT: ', len(all_team_info))
+    print('##########ALL: ', all_team_info)
 
-    team_html = get_team_html('https://en.wikipedia.org/wiki/Atlanta_Hawks')
-    get_team_wiki_table(team_html)
+    team_wiki_html = get_html(base_wiki_url + '/wiki/Atlanta_Hawks')
+    team_wiki_table = get_table(team_wiki_html, 'infobox vcard')
+    print('team_wiki_table', team_wiki_table)
 
 
 if __name__ == '__main__':
