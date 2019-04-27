@@ -14,10 +14,13 @@ NBATeamWiki = namedtuple('NBATeamWiki', [
     'stadium_lon',
     'year_founded',
     'year_joined',
+    'head_coach',
     'team_wiki',
     'city_wiki',
     'stadium_wiki',
 ])
+
+BASE_WIKI_URL = 'https://en.wikipedia.org'
 
 
 def header():
@@ -58,12 +61,10 @@ def get_all_team_info(rows_from_nba_table):
 
         if get_conference(row):
             conference = get_conference(row)
-            # print('CONFERENCE: ', conference)
             continue
 
         if get_division(row):
             division = get_division(row)
-            # print('DIVISION: ', division)
 
         all_team_info.append(get_team_info(row, conference, division))
 
@@ -98,6 +99,11 @@ def get_team_info(row, conference=None, division=None):
     year_founded = int(get_text_from_html(team_data[5]).replace('*', ''))
     year_joined = int(get_text_from_html(team_data[-1]).replace('*', ''))
 
+    team_wiki_html = get_html(BASE_WIKI_URL + team_wiki)
+    team_wiki_table = get_table(team_wiki_html, 'infobox vcard')
+    rows_from_team_table = get_rows(team_wiki_table)
+    head_coach = get_head_coach(rows_from_team_table)
+
     team = NBATeamWiki(
         name=team_name,
         conference=conference,
@@ -110,12 +116,12 @@ def get_team_info(row, conference=None, division=None):
         stadium_lon=lon,
         year_founded=year_founded,
         year_joined=year_joined,
+        head_coach=head_coach,
         team_wiki=team_wiki,
         city_wiki=city_wiki,
         stadium_wiki=stadium_wiki
     )
 
-    # print('TEAM: ', team)
     return team
 
 
@@ -124,7 +130,8 @@ def get_head_coach(rows_from_team_table):
     for row in rows_from_team_table:
         if row.find('th', text='Head coach'):
             row_with_head_coach = row
-    print(get_text_from_html(row_with_head_coach.find('a', title=True)))
+
+    return get_text_from_html(row_with_head_coach.find('a', title=True))
 
 
 def get_text_from_html(html):
@@ -133,20 +140,14 @@ def get_text_from_html(html):
 
 def main():
     header()
-    base_wiki_url = 'https://en.wikipedia.org'
-    nba_wiki_html = get_html(base_wiki_url + '/wiki/National_Basketball_Association')
+    nba_wiki_html = get_html(BASE_WIKI_URL + '/wiki/National_Basketball_Association')
     nba_wiki_table = get_table(nba_wiki_html, 'navbox wikitable')
     rows_from_nba_table = get_rows(nba_wiki_table)
     # headers = get_headers(rows_from_nba_table[0])
     # print('headers: ', headers)
     all_team_info = get_all_team_info(rows_from_nba_table)
-    # print('##########COUNT: ', len(all_team_info))
-    # print('##########ALL: ', all_team_info)
-
-    team_wiki_html = get_html(base_wiki_url + '/wiki/Atlanta_Hawks')
-    team_wiki_table = get_table(team_wiki_html, 'infobox vcard')
-    rows_from_team_table = get_rows(team_wiki_table)
-    get_head_coach(rows_from_team_table)
+    print('##########COUNT: ', len(all_team_info))
+    print('##########ALL: ', all_team_info)
 
 
 if __name__ == '__main__':
