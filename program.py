@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 from collections import namedtuple
 import pandas as pd
 from tabulate import tabulate
+import csv
+import os
 
 NBATeamWiki = namedtuple('NBATeamWiki', [
     'name',
@@ -140,6 +142,23 @@ def get_text_from_html(html):
     return html.text.strip() if html else None
 
 
+def download_nba_csv(nba_wiki_df):
+    output_dir = get_folder('output')
+    csvfile = os.path.abspath(os.path.join(output_dir, 'wiki-nba_team_info.csv'))
+    nba_wiki_df.to_csv(csvfile, index=False, quoting=csv.QUOTE_ALL)
+    print('success!!!!!')
+
+
+def get_folder(folder):
+    base = os.path.abspath(os.path.dirname(__file__))
+    path = os.path.abspath(os.path.join(base, folder))
+
+    if not os.path.exists(path) or not os.path.isdir(path):
+        os.mkdir(folder)
+
+    return path
+
+
 def main():
     header()
     nba_wiki_html = get_html(BASE_WIKI_URL + '/wiki/National_Basketball_Association')
@@ -148,7 +167,6 @@ def main():
     # headers = get_headers(rows_from_nba_table[0])
     # print('headers: ', headers)
     all_team_info = get_all_team_info(rows_from_nba_table)
-
     df = pd.DataFrame(all_team_info)
     print('df.shape: ', df.shape)
     print('df.head: ', tabulate(df.loc[:, :'year_joined'].head()))
@@ -158,6 +176,8 @@ def main():
     print(df[['division', 'stadium_capacity']].groupby('division').sum())
     print(tabulate(df.loc[[df['stadium_capacity'].idxmin()], :'stadium_capacity'], headers='keys', tablefmt='psql'))
     print(tabulate(df.loc[[df['stadium_capacity'].idxmax()], :'stadium_capacity'], headers='keys', tablefmt='psql'))
+    download_nba_csv(df)
+    print('*****END*****')
 
 
 if __name__ == '__main__':
