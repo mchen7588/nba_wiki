@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 from collections import namedtuple
+import pandas as pd
+from tabulate import tabulate
 
 NBATeamWiki = namedtuple('NBATeamWiki', [
     'name',
@@ -104,7 +106,7 @@ def get_team_info(row, conference=None, division=None):
     rows_from_team_table = get_rows(team_wiki_table)
     head_coach = get_head_coach(rows_from_team_table)
 
-    team = NBATeamWiki(
+    team = NBATeamWiki._asdict(NBATeamWiki(
         name=team_name,
         conference=conference,
         division=division,
@@ -120,7 +122,7 @@ def get_team_info(row, conference=None, division=None):
         team_wiki=team_wiki,
         city_wiki=city_wiki,
         stadium_wiki=stadium_wiki
-    )
+    ))
 
     return team
 
@@ -146,8 +148,16 @@ def main():
     # headers = get_headers(rows_from_nba_table[0])
     # print('headers: ', headers)
     all_team_info = get_all_team_info(rows_from_nba_table)
-    print('##########COUNT: ', len(all_team_info))
-    print('##########ALL: ', all_team_info)
+
+    df = pd.DataFrame(all_team_info)
+    print('df.shape: ', df.shape)
+    print('df.head: ', tabulate(df.loc[:, :'year_joined'].head()))
+    print('min capacity: ', df['stadium_capacity'].min())
+    print('max capacity: ', df['stadium_capacity'].max())
+    print('total capacity: ', df['stadium_capacity'].sum())
+    print(df[['division', 'stadium_capacity']].groupby('division').sum())
+    print(tabulate(df.loc[[df['stadium_capacity'].idxmin()], :'stadium_capacity'], headers='keys', tablefmt='psql'))
+    print(tabulate(df.loc[[df['stadium_capacity'].idxmax()], :'stadium_capacity'], headers='keys', tablefmt='psql'))
 
 
 if __name__ == '__main__':
